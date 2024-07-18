@@ -1,7 +1,17 @@
 .App {
-  text-align: center;
+  height: 100%;
 }
-
+#root,body,html {
+  height: 100%;
+}
+.ant-layout {
+  display: flex;
+  width: 100%;
+  min-height: 100%;
+}
+.show::-webkit-scrollbar{
+  display: none;
+}
 .App-logo {
   height: 40vmin;
   pointer-events: none;
@@ -12,7 +22,15 @@
     animation: App-logo-float infinite 3s ease-in-out;
   }
 }
-
+.listItem:hover{
+  cursor: pointer;
+  background-color: rgb(246,247,249);
+  border-left: 2px solid rgb(62,111,521);
+}
+.active{
+  background-color: rgb(246,247,249);
+  border-left: 2px solid rgb(62,111,521);
+}
 .App-header {
   min-height: 100vh;
   display: flex;
@@ -36,4 +54,10 @@
   100% {
     transform: translateY(0px);
   }
+}
+.chatList{
+  border-left: 1px solid rgb(226, 226, 226);
+  border-right: 1px solid rgb(226, 226, 226);
+  width: 200px;
+  background-color: white;
 }
