@@ -1,4 +1,4 @@
-import { Button, Flex, Input, Layout, Menu, Modal } from 'antd';
+import { Button, Flex, Input, Layout, Menu, message, Modal } from 'antd';
 import './App.css';
 import Sider from 'antd/es/layout/Sider';
 import { Content } from 'antd/es/layout/layout';
@@ -6,14 +6,17 @@ import { useState } from 'react';
 import { CloseOutlined, HistoryOutlined, MenuFoldOutlined, MenuUnfoldOutlined, PieChartOutlined } from '@ant-design/icons';
 import ChatList from './features/chat/ChatList';
 import Chat from './features/chat/Chat';
-import { canTitle, changeCurChatId, reTitle, tempTitle, titleStatus } from './features/chat/chatSlice';
+import { canTitle, changeCurChatId, curChatId, ifTitleForNew, reTitle, tempTitle, titleIsNew, titleStatus } from './features/chat/chatSlice';
 import { useAppDispatch, useAppSelector } from './app/hooks';
-import { addChatList } from './features/chat/chatListSlice';
+import { addChatList, responseMsg } from './features/chat/chatListSlice';
 import { v4 } from 'uuid';
-import { newEmptyChat } from './features/chat/chatAPI';
+import { changeTitle, checkUser, newEmptyChat } from './features/chat/chatAPI';
+import logo from './kunwosoft Logo.png'
 function App() {
   const openTitle = useAppSelector(titleStatus);
   const title = useAppSelector(tempTitle);
+  const titleForNew=useAppSelector(titleIsNew)
+  const curChat = useAppSelector(curChatId); 
   const dispatch = useAppDispatch();
   const [collapsed, setCollapsed] = useState(false);
   const [showHistory,setShowHistory]=useState(true)
@@ -21,15 +24,17 @@ function App() {
     setCollapsed(!collapsed);
   };
   const items = [
-    { key: '1', label: 'ChatGLM' , icon: <PieChartOutlined />},
+    { key: '1', label: '智能助手' , icon: <PieChartOutlined />},
     { key: '2', label: '长文档解读' , icon: <PieChartOutlined />},
     { key: '3' , label: 'AI搜索' , icon: <PieChartOutlined />},
     { key: '4' , label: 'AI画图' , icon: <PieChartOutlined />},
     { key: '5' , label: '数据分析' , icon: <PieChartOutlined />},
   ]
   const newTitle=()=>{
-    let newId=v4()
-    let data={
+
+    if(titleForNew){
+      let newId=v4()
+      let data={
         "id":newId,
         "title":title,
         "history":[]
@@ -37,13 +42,27 @@ function App() {
     dispatch(addChatList(data))
     newEmptyChat(data).then(()=>{
       dispatch(changeCurChatId(newId))
-    })
+    }).catch(err=>message.error(err))
     dispatch(canTitle(false))
     dispatch(reTitle(''))
+    }else{
+      changeTitle(curChat,title).then(()=>{
+        dispatch(canTitle(false))
+        dispatch(reTitle(''))
+        return checkUser()
+      }).then((res:any)=>{
+        if(res.status===200){
+            document.cookie="glmUserId="+res.data.glmUserId+";expires=Fri, 31 Dec 9999 23:59:59 GMT";
+            dispatch(responseMsg(res.data.chatList))
+        }
+    })
+    }
   }
   const newChat=()=>{
+    dispatch(ifTitleForNew(true))
     dispatch(canTitle(true))
   }
+  
   return (
     <div className="App">
       <Modal title="标题" open={openTitle} onOk={newTitle} onCancel={()=>dispatch(canTitle(false))}>
@@ -51,14 +70,13 @@ function App() {
       </Modal>
       <Layout>
         <Sider collapsed={collapsed} theme='light'>
-            <Flex style={{width:80,float:'right'}} justify='space-between'>
-              
-              {showHistory?<div></div>:<Button onClick={()=>setShowHistory(true)} style={{paddingLeft:10,paddingRight:10, marginBottom: 16 ,border:'none',boxShadow:'none'}}><HistoryOutlined /></Button>}
-              <Button  onClick={toggleCollapsed} style={{paddingLeft:10,paddingRight:10, marginBottom: 16 ,border:'none',boxShadow:'none'}}>
+            <img src={logo} style={{marginLeft:8,marginTop:8}} height={40} alt="" />  
+            <Flex style={{width:80,height:40,float:'right'}} justify='space-between' align='center'>
+              {showHistory?<div></div>:<Button onClick={()=>setShowHistory(true)} style={{paddingLeft:10,paddingRight:10 ,border:'none',boxShadow:'none'}}><HistoryOutlined /></Button>}
+              <Button  onClick={toggleCollapsed} style={{paddingLeft:10,paddingRight:10,border:'none',boxShadow:'none'}}>
               {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
               </Button>
             </Flex>
-            
             <Menu
               defaultSelectedKeys={['1']}
               defaultOpenKeys={['sub1']}
